@@ -1,4 +1,5 @@
 import hashlib
+from random import random
 from typing import Optional, List
 
 from transaction import Transaction, DIFFICULTY
@@ -66,7 +67,14 @@ class Block:
     def mine(self):
         # TODO: Implement mining
         # Hint: Increment nonce until hash() returns a value <= DIFFICULTY
-        pass
+
+        while True:
+            nonce=random.randint(0, 2**64 - 1)
+            hash_hex=nonce.to_bytes(8, byteorder='big').hex()
+            hash_int = int(hash_hex, 16)
+            if hash_int <= DIFFICULTY:
+                break
+
 
     # Hash the block header (prev + merkle_root + nonce)
     def hash(self) -> str:

@@ -41,7 +41,9 @@ class Output:
     def to_bytes(self) -> bytes:
         """Serialize the output to bytes."""
         # TODO: Serialize value (4 bytes, big-endian) + script_pubkey bytes
-        pass
+        value = self.value.to_bytes(4, byteorder='big')
+        script = self.script_pubkey.to_bytes()
+        return value + script
 
 
 class Input:
@@ -86,7 +88,8 @@ class Transaction:
     def get_hash(self) -> str:
         """Compute the SHA256 hash of the serialized transaction."""
         # TODO: Compute and return the SHA256 hash (hex string) of self.to_bytes()
-        pass
+        text= bytes.fromhex(self.to_bytes())
+        return sha256_hash(text).hex()
 
     @staticmethod
     def coinbase(miner_pub_key: str, reward: int = BLOCK_REWARD) -> 'Transaction':

@@ -28,42 +28,21 @@ OPCODES = {OP_DUP, OP_SHA256, OP_EQUALVERIFY, OP_CHECKSIG}
 
 
 def sha256_hash(data: bytes) -> bytes:
-    """
-    SHA256 hash for public keys.
-
-    This is used to create the public key hash in P2PKH transactions.
-    (Bitcoin uses RIPEMD160(SHA256), but we use plain SHA256 for simplicity.)
-    """
-    # TODO: Implement sha256_hash
-    # Hint: Use hashlib.sha256(data).digest()
-    pass
+    return hashlib.sha256(data).digest()
 
 
 def verify_p2pkh(signature: bytes, pubkey: bytes, expected_pubkey_hash: bytes, tx_data: bytes) -> bool:
-    """
-    [REQUIRED] Verify a P2PKH transaction directly without stack manipulation.
+    #Step 1: Verify Key
+    if sha256_hash(pubkey) != expected_pubkey_hash:
+        return False
 
-    This is a simplified validation that checks:
-    1. The public key hashes to the expected hash (SHA256(pubkey) == expected_pubkey_hash)
-    2. The signature is valid for the given transaction data
-
-    Args:
-        signature: The signature bytes from scriptSig
-        pubkey: The public key bytes from scriptSig
-        expected_pubkey_hash: The pubkey hash from scriptPubKey (what the funds are locked to)
-        tx_data: The transaction data that was signed
-
-    Returns:
-        True if validation passes, False otherwise
-
-    Hint: Use sha256_hash() to hash the pubkey
-    Hint: Use VerifyKey(pubkey).verify(tx_data, signature) to check the signature
-    Hint: Wrap signature verification in try/except to catch BadSignatureError
-    """
-    # TODO: Implement verify_p2pkh
-    # Step 1: Check that sha256_hash(pubkey) == expected_pubkey_hash
-    # Step 2: Verify the signature using VerifyKey
-    pass
+        # Step 2: Verify signature
+    try:
+        verify_key = VerifyKey(pubkey)
+        verify_key.verify(tx_data, signature)
+        return True
+    except (BadSignatureError, Exception):
+        return False
 
 
 class Script:
@@ -78,42 +57,30 @@ class Script:
         self.elements = elements
 
     def to_bytes(self) -> bytes:
-        """
-        Serialize the script to bytes for hashing.
-
-        Each element is converted to bytes and concatenated:
-        - Opcodes are encoded as their string representation (UTF-8)
-        - Data elements (hex strings) are converted to bytes
-        """
-        # TODO: Implement serialization
-        pass
+        result = b""
+        for element in self.elements:
+            if element in OPCODES:
+                # If Op
+                result += element.encode('utf-8')
+            else:
+                result += bytes.fromhex(element)
+        return result
 
     @staticmethod
     def p2pkh_locking_script(pub_key_hash: str) -> 'Script':
-        """
-        Create a P2PKH locking script (scriptPubKey).
-
-        Format: OP_DUP OP_SHA256 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-
-        This script locks funds to a public key hash. To spend, the spender
-        must provide a signature and public key that hashes to this value.
-        """
         return Script([OP_DUP, OP_SHA256, pub_key_hash, OP_EQUALVERIFY, OP_CHECKSIG])
 
     @staticmethod
     def p2pkh_unlocking_script(signature: str, pub_key: str) -> 'Script':
-        """
-        Create a P2PKH unlocking script (scriptSig).
-
-        Format: <signature> <pubKey>
-
-        This script provides the signature and public key needed to unlock
-        a P2PKH output.
-        """
         return Script([signature, pub_key])
 
     def __repr__(self):
         return f"Script({self.elements})"
+
+
+
+
+
 
 
 class ScriptInterpreter:
